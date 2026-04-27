@@ -1,0 +1,21 @@
+# IntelliJ / Android Studio
+*.iml
+.gradle
+/.idea
+/.kotlin
+
+# Local machine configuration
+/local.properties
+
+# Build outputs
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# AI
+.claude/settings.local.json
