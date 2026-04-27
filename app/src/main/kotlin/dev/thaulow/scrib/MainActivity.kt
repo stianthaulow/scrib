@@ -53,211 +53,225 @@ import dev.thaulow.scrib.ui.ShareDialog
 import java.io.File
 
 class MainActivity : ComponentActivity() {
-
-    private val viewModel: MainViewModel by viewModels {
-        viewModelFactory {
-            initializer {
-                MainViewModel(
-                    NoteRepository(File(filesDir, "scrib.txt")),
-                    UndoStackRepository(File(filesDir, "scrib.undo.json")),
-                    createSavedStateHandle(),
-                )
-            }
-        }
+  private val viewModel: MainViewModel by viewModels {
+    viewModelFactory {
+      initializer {
+        MainViewModel(
+          NoteRepository(File(filesDir, "scrib.txt")),
+          UndoStackRepository(File(filesDir, "scrib.undo.json")),
+          createSavedStateHandle(),
+        )
+      }
     }
+  }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
 
-        captureShareIntent(intent)
+    captureShareIntent(intent)
 
-        lifecycle.addObserver(LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_PAUSE) {
-                viewModel.flushPendingSave()
-            }
-        })
-
-        setContent {
-            ScribTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    EditorScreen(
-                        viewModel = viewModel,
-                    )
-                }
-            }
+    lifecycle.addObserver(
+      LifecycleEventObserver { _, event ->
+        if (event == Lifecycle.Event.ON_PAUSE) {
+          viewModel.flushPendingSave()
         }
+      },
+    )
+
+    setContent {
+      ScribTheme {
+        Surface(
+          modifier = Modifier.fillMaxSize(),
+          color = MaterialTheme.colorScheme.background,
+        ) {
+          EditorScreen(
+            viewModel = viewModel,
+          )
+        }
+      }
     }
+  }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        captureShareIntent(intent)
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    captureShareIntent(intent)
+  }
+
+  private fun captureShareIntent(intent: Intent?) {
+    if (intent == null || intent.action != Intent.ACTION_SEND) return
+    val raw = intent.getStringExtra(Intent.EXTRA_TEXT)
+    val key = buildShareKey(intent, raw)
+    if (intent.type != "text/plain") {
+      viewModel.markShareHandled(key)
+      return
     }
-
-    private fun captureShareIntent(intent: Intent?) {
-        if (intent == null || intent.action != Intent.ACTION_SEND) return
-        val raw = intent.getStringExtra(Intent.EXTRA_TEXT)
-        val key = buildShareKey(intent, raw)
-        if (intent.type != "text/plain") {
-            viewModel.markShareHandled(key)
-            return
-        }
-        if (raw == null) {
-            viewModel.markShareHandled(key)
-            return
-        }
-        val text = cleanSharedText(raw)
-        if (text.isEmpty()) {
-            viewModel.markShareHandled(key)
-            return
-        }
-        viewModel.handleSharedText(text, key)
+    if (raw == null) {
+      viewModel.markShareHandled(key)
+      return
     }
+    val text = cleanSharedText(raw)
+    if (text.isEmpty()) {
+      viewModel.markShareHandled(key)
+      return
+    }
+    viewModel.handleSharedText(text, key)
+  }
 
-    private fun buildShareKey(intent: Intent, raw: String?): String =
-        "${intent.action}|${intent.type}|${intent.`package`}|${raw.orEmpty()}".hashCode().toString()
+  private fun buildShareKey(
+    intent: Intent,
+    raw: String?,
+  ): String = "${intent.action}|${intent.type}|${intent.`package`}|${raw.orEmpty()}".hashCode().toString()
 }
 
 private val TRAILING_URL = Regex("\\s*https?://\\S+\\s*$")
 private val QUOTE_PAIRS = listOf('"' to '"', '\u201C' to '\u201D', '\u00AB' to '\u00BB')
 
-private fun cleanSharedText(text: String): String =
-    stripSurroundingQuotes(stripTrailingUrl(text)).trim()
+private fun cleanSharedText(text: String): String = stripSurroundingQuotes(stripTrailingUrl(text)).trim()
 
 private fun stripTrailingUrl(text: String): String {
-    val trimmed = text.trimEnd()
-    val match = TRAILING_URL.find(trimmed) ?: return trimmed
-    val before = trimmed.substring(0, match.range.first).trimEnd()
-    return if (before.isEmpty()) trimmed else before
+  val trimmed = text.trimEnd()
+  val match = TRAILING_URL.find(trimmed) ?: return trimmed
+  val before = trimmed.substring(0, match.range.first).trimEnd()
+  return if (before.isEmpty()) trimmed else before
 }
 
 private fun stripSurroundingQuotes(text: String): String {
-    val trimmed = text.trim()
-    if (trimmed.length < 2) return trimmed
-    for ((open, close) in QUOTE_PAIRS) {
-        if (trimmed.first() == open && trimmed.last() == close) {
-            return trimmed.substring(1, trimmed.length - 1)
-        }
+  val trimmed = text.trim()
+  if (trimmed.length < 2) return trimmed
+  for ((open, close) in QUOTE_PAIRS) {
+    if (trimmed.first() == open && trimmed.last() == close) {
+      return trimmed.substring(1, trimmed.length - 1)
     }
-    return trimmed
+  }
+  return trimmed
 }
 
 @Composable
-private fun EditorScreen(
-    viewModel: MainViewModel,
-) {
-    val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-    val keyboard = LocalSoftwareKeyboardController.current
-    val density = LocalDensity.current
-    val imeVisible = WindowInsets.ime.getBottom(density) > 0
-    val pendingShare = viewModel.pendingShareFlow.collectAsStateWithLifecycle().value
-    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+private fun EditorScreen(viewModel: MainViewModel) {
+  val context = LocalContext.current
+  val focusRequester = remember { FocusRequester() }
+  val keyboard = LocalSoftwareKeyboardController.current
+  val density = LocalDensity.current
+  val imeVisible = WindowInsets.ime.getBottom(density) > 0
+  val pendingShare = viewModel.pendingShareFlow.collectAsStateWithLifecycle().value
+  var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboard?.show()
-    }
+  LaunchedEffect(Unit) {
+    focusRequester.requestFocus()
+    keyboard?.show()
+  }
 
-    val onToggleKeyboard: () -> Unit = {
-        if (imeVisible) {
-            keyboard?.hide()
-        } else {
-            focusRequester.requestFocus()
-            keyboard?.show()
-        }
+  LaunchedEffect(viewModel) {
+    viewModel.saveError.collect {
+      Toast.makeText(context, "Failed to save — storage may be full", Toast.LENGTH_LONG).show()
     }
+  }
 
-    val onCopy: () -> Unit = {
-        val v = viewModel.value
-        val text = if (v.selection.collapsed) v.text
-        else v.text.substring(v.selection.min, v.selection.max)
-        val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        manager.setPrimaryClip(ClipData.newPlainText("Scrib", text))
+  val onToggleKeyboard: () -> Unit = {
+    if (imeVisible) {
+      keyboard?.hide()
+    } else {
+      focusRequester.requestFocus()
+      keyboard?.show()
     }
+  }
 
-    val onReplace: () -> Unit = {
-        val pasted = readClipboardAsText(context)
-        if (pasted.isNullOrEmpty()) {
-            Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
-        } else {
-            viewModel.replaceWith(pasted)
-        }
-    }
+  val onCopy: () -> Unit = {
+    val v = viewModel.value
+    val text =
+      if (v.selection.collapsed) {
+        v.text
+      } else {
+        v.text.substring(v.selection.min, v.selection.max)
+      }
+    val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    manager.setPrimaryClip(ClipData.newPlainText("Scrib", text))
+  }
 
-    val onAppend: () -> Unit = {
-        val pasted = readClipboardAsText(context)
-        if (pasted.isNullOrEmpty()) {
-            Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
-        } else {
-            viewModel.append(pasted)
-        }
+  val onReplace: () -> Unit = {
+    val pasted = readClipboardAsText(context)
+    if (pasted.isNullOrEmpty()) {
+      Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+    } else {
+      viewModel.replaceWith(pasted)
     }
+  }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        BasicTextField(
-            value = viewModel.value,
-            onValueChange = viewModel::onValueChange,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(16.dp)
-                .focusRequester(focusRequester),
-            textStyle = TextStyle(
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
-            onTextLayout = { textLayout = it },
-        )
-        BottomBar(
-            imeVisible = imeVisible,
-            canUndo = viewModel.canUndo,
-            canRedo = viewModel.canRedo,
-            onToggleKeyboard = onToggleKeyboard,
-            onClear = viewModel::clear,
-            onCopy = onCopy,
-            onReplace = onReplace,
-            onAppend = onAppend,
-            onUndo = viewModel::undo,
-            onRedo = viewModel::redo,
-            onMoveLeft = { viewModel.moveCursor(-1) },
-            onMoveRight = { viewModel.moveCursor(1) },
-            onMoveUp = { textLayout?.let { viewModel.moveCursorToLine(-1, it) } },
-            onMoveDown = { textLayout?.let { viewModel.moveCursorToLine(1, it) } },
-            onSelectWord = viewModel::selectCurrentWord,
-            modifier = Modifier
-                .navigationBarsPadding()
-                .imePadding(),
-        )
+  val onAppend: () -> Unit = {
+    val pasted = readClipboardAsText(context)
+    if (pasted.isNullOrEmpty()) {
+      Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+    } else {
+      viewModel.append(pasted)
     }
+  }
 
-    if (pendingShare != null) {
-        ShareDialog(
-            onReplace = {
-                viewModel.replaceWith(pendingShare)
-                viewModel.clearPendingShare()
-            },
-            onAppend = {
-                viewModel.append(pendingShare)
-                viewModel.clearPendingShare()
-            },
-            onDismiss = viewModel::clearPendingShare,
-        )
-    }
+  Column(
+    modifier =
+      Modifier
+        .fillMaxSize()
+        .statusBarsPadding(),
+  ) {
+    BasicTextField(
+      value = viewModel.value,
+      onValueChange = viewModel::onValueChange,
+      modifier =
+        Modifier
+          .weight(1f)
+          .fillMaxWidth()
+          .padding(16.dp)
+          .focusRequester(focusRequester),
+      textStyle =
+        TextStyle(
+          fontSize = 16.sp,
+          color = MaterialTheme.colorScheme.onBackground,
+        ),
+      cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
+      onTextLayout = { textLayout = it },
+    )
+    BottomBar(
+      imeVisible = imeVisible,
+      canUndo = viewModel.canUndo,
+      canRedo = viewModel.canRedo,
+      onToggleKeyboard = onToggleKeyboard,
+      onClear = viewModel::clear,
+      onCopy = onCopy,
+      onReplace = onReplace,
+      onAppend = onAppend,
+      onUndo = viewModel::undo,
+      onRedo = viewModel::redo,
+      onMoveLeft = { viewModel.moveCursor(-1) },
+      onMoveRight = { viewModel.moveCursor(1) },
+      onMoveUp = { textLayout?.let { viewModel.moveCursorToLine(-1, it) } },
+      onMoveDown = { textLayout?.let { viewModel.moveCursorToLine(1, it) } },
+      onSelectWord = viewModel::selectCurrentWord,
+      modifier =
+        Modifier
+          .navigationBarsPadding()
+          .imePadding(),
+    )
+  }
+
+  if (pendingShare != null) {
+    ShareDialog(
+      onReplace = {
+        viewModel.replaceWith(pendingShare)
+        viewModel.clearPendingShare()
+      },
+      onAppend = {
+        viewModel.append(pendingShare)
+        viewModel.clearPendingShare()
+      },
+      onDismiss = viewModel::clearPendingShare,
+    )
+  }
 }
 
 private fun readClipboardAsText(context: Context): String? {
-    val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = manager.primaryClip ?: return null
-    if (clip.itemCount == 0) return null
-    return clip.getItemAt(0).coerceToText(context)?.toString()
+  val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+  val clip = manager.primaryClip ?: return null
+  if (clip.itemCount == 0) return null
+  return clip.getItemAt(0).coerceToText(context)?.toString()
 }
