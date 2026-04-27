@@ -14,34 +14,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.thaulow.scrib.ui.theme.ScribTheme
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            ScribTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
+    setContent {
+      ScribTheme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+          Greeting(
+            name = "Android",
+            modifier = Modifier.padding(innerPadding),
+          )
         }
+      }
     }
+  }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun Greeting(
+  name: String,
+  modifier: Modifier = Modifier,
+) {
+  Text(
+    text = "Hello $name!",
+    modifier = modifier,
+  )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    ScribTheme {
-        Greeting("Android")
-    }
+  ScribTheme {
+    Greeting("Android")
+  }
 }
