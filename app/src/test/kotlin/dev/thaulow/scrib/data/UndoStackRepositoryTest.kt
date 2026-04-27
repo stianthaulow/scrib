@@ -8,7 +8,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 class UndoStackRepositoryTest {
-
   @get:Rule
   val tmp = TemporaryFolder()
 
@@ -20,13 +19,15 @@ class UndoStackRepositoryTest {
   @Test
   fun `save and load roundtrip preserves all fields`() {
     val repo = UndoStackRepository(File(tmp.root, "undo.json"))
-    val dto = UndoStackDto(
-      entries = listOf(
-        Snapshot("hello", 3, 3),
-        Snapshot("hello world", 11, 11),
-      ),
-      index = 1,
-    )
+    val dto =
+      UndoStackDto(
+        entries =
+          listOf(
+            Snapshot("hello", 3, 3),
+            Snapshot("hello world", 11, 11),
+          ),
+        index = 1,
+      )
     repo.save(dto)
     assertEquals(dto, repo.load())
   }
@@ -39,9 +40,17 @@ class UndoStackRepositoryTest {
 
   @Test
   fun `load ignores unknown keys`() {
-    val file = tmp.newFile("undo.json").also {
-      it.writeText("""{"entries":[{"text":"hi","cursorStart":2,"cursorEnd":2,"future":"x"}],"index":0}""")
-    }
-    assertEquals("hi", UndoStackRepository(file).load()?.entries?.first()?.text)
+    val file =
+      tmp.newFile("undo.json").also {
+        it.writeText("""{"entries":[{"text":"hi","cursorStart":2,"cursorEnd":2,"future":"x"}],"index":0}""")
+      }
+    assertEquals(
+      "hi",
+      UndoStackRepository(file)
+        .load()
+        ?.entries
+        ?.first()
+        ?.text,
+    )
   }
 }

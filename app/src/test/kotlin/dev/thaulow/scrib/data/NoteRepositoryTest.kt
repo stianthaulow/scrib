@@ -7,7 +7,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 class NoteRepositoryTest {
-
   @get:Rule
   val tmp = TemporaryFolder()
 

@@ -26,80 +26,80 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun BottomBar(
-    imeVisible: Boolean,
-    canUndo: Boolean,
-    canRedo: Boolean,
-    onToggleKeyboard: () -> Unit,
-    onClear: () -> Unit,
-    onCopy: () -> Unit,
-    onReplace: () -> Unit,
-    onAppend: () -> Unit,
-    onUndo: () -> Unit,
-    onRedo: () -> Unit,
-    onMoveLeft: () -> Unit,
-    onMoveRight: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onSelectWord: () -> Unit,
-    modifier: Modifier = Modifier,
+  imeVisible: Boolean,
+  canUndo: Boolean,
+  canRedo: Boolean,
+  onToggleKeyboard: () -> Unit,
+  onClear: () -> Unit,
+  onCopy: () -> Unit,
+  onReplace: () -> Unit,
+  onAppend: () -> Unit,
+  onUndo: () -> Unit,
+  onRedo: () -> Unit,
+  onMoveLeft: () -> Unit,
+  onMoveRight: () -> Unit,
+  onMoveUp: () -> Unit,
+  onMoveDown: () -> Unit,
+  onSelectWord: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onAppend) {
-                Icon(Icons.Filled.PostAdd, contentDescription = "Append clipboard to note")
-            }
-            IconButton(onClick = onReplace) {
-                Icon(Icons.Filled.ContentPaste, contentDescription = "Replace note with clipboard")
-            }
-            IconButton(onClick = onCopy) {
-                Icon(Icons.Filled.ContentCopy, contentDescription = "Copy note to clipboard")
-            }
-            IconButton(onClick = onSelectWord) {
-                Icon(Icons.Filled.SelectAll, contentDescription = "Select word")
-            }
-            IconButton(onClick = onMoveUp) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move cursor up")
-            }
-            IconButton(onClick = onToggleKeyboard) {
-                Icon(
-                    imageVector = if (imeVisible) Icons.Filled.KeyboardHide else Icons.Filled.Keyboard,
-                    contentDescription = if (imeVisible) "Hide keyboard" else "Show keyboard",
-                )
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onClear) {
-                Icon(Icons.Filled.Delete, contentDescription = "Clear note")
-            }
-            IconButton(onClick = onUndo, enabled = canUndo) {
-                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
-            }
-            IconButton(onClick = onRedo, enabled = canRedo) {
-                Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
-            }
-            IconButton(onClick = onMoveLeft) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Move cursor left",
-                )
-            }
-            IconButton(onClick = onMoveDown) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move cursor down")
-            }
-            IconButton(onClick = onMoveRight) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Move cursor right",
-                )
-            }
-        }
+  Column(modifier = modifier.fillMaxWidth()) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceEvenly,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      IconButton(onClick = onAppend) {
+        Icon(Icons.Filled.PostAdd, contentDescription = "Append clipboard to note")
+      }
+      IconButton(onClick = onReplace) {
+        Icon(Icons.Filled.ContentPaste, contentDescription = "Replace note with clipboard")
+      }
+      IconButton(onClick = onCopy) {
+        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy note to clipboard")
+      }
+      IconButton(onClick = onSelectWord) {
+        Icon(Icons.Filled.SelectAll, contentDescription = "Select word")
+      }
+      IconButton(onClick = onMoveUp) {
+        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move cursor up")
+      }
+      IconButton(onClick = onToggleKeyboard) {
+        Icon(
+          imageVector = if (imeVisible) Icons.Filled.KeyboardHide else Icons.Filled.Keyboard,
+          contentDescription = if (imeVisible) "Hide keyboard" else "Show keyboard",
+        )
+      }
     }
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceEvenly,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      IconButton(onClick = onClear) {
+        Icon(Icons.Filled.Delete, contentDescription = "Clear note")
+      }
+      IconButton(onClick = onUndo, enabled = canUndo) {
+        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+      }
+      IconButton(onClick = onRedo, enabled = canRedo) {
+        Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+      }
+      IconButton(onClick = onMoveLeft) {
+        Icon(
+          Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+          contentDescription = "Move cursor left",
+        )
+      }
+      IconButton(onClick = onMoveDown) {
+        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move cursor down")
+      }
+      IconButton(onClick = onMoveRight) {
+        Icon(
+          Icons.AutoMirrored.Filled.KeyboardArrowRight,
+          contentDescription = "Move cursor right",
+        )
+      }
+    }
+  }
 }
