@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.kotlin.serialization)
 }
+
+val localProps = Properties().apply {
+  val f = rootProject.file("local.properties")
+  if (f.exists()) load(f.inputStream())
+}
+
+val signingPassword =
+  System.getenv("SIGNING_PASSWORD") ?: localProps["signing.password"] as String? ?: ""
 
 android {
   namespace = "dev.thaulow.scrib"
@@ -23,8 +33,18 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  signingConfigs {
+    create("release") {
+      storeFile = file("scrib-upload.jks")
+      storePassword = signingPassword
+      keyAlias = "scrib"
+      keyPassword = signingPassword
+    }
+  }
+
   buildTypes {
     release {
+      signingConfig = signingConfigs.getByName("release")
       isMinifyEnabled = false
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),

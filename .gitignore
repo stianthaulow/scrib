@@ -19,3 +19,6 @@ Thumbs.db
 
 # AI
 .claude/settings.local.json
+# Keystore
+*.jks
+*.keystore
