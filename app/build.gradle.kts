@@ -6,10 +6,11 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
-val localProps = Properties().apply {
-  val f = rootProject.file("local.properties")
-  if (f.exists()) load(f.inputStream())
-}
+val localProps =
+  Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+  }
 
 val signingPassword =
   System.getenv("SIGNING_PASSWORD") ?: localProps["signing.password"] as String? ?: ""
@@ -28,7 +29,7 @@ android {
     minSdk = 24
     targetSdk = 36
     versionCode = 1
-    versionName = "1.0"
+    versionName = "0.1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
