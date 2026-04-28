@@ -1,0 +1,11 @@
+Scrib is a lightweight text workspace for Android. Paste or share text in, use the editing helpers to isolate exactly what you need, then copy it back out.
+
+Works well for things like extracting a phone number from a wall of text: share to Scrib, tap the number, copy.
+
+Features:
+
+- Share target: any app can share text directly to Scrib via Android's share sheet
+- Smart cleaning: strips trailing URLs and surrounding quotation marks automatically on share
+- Cursor controls: move left, right, up, down and select the word under the caret — no fiddling with touch handles
+- Clipboard actions: append, replace from clipboard, or copy the note or current selection in one tap
+- Persistent undo: undo/redo history saved across restarts

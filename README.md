@@ -2,7 +2,7 @@
 
 A simple text workspace for Android. Copy messy text in, clean it up, copy out what you need, with shortcut keys and arrow key helpers to simplify precise selection.
 
-Typical use: you copy a message containing a phone number. Share it to Scrib, tap the number, hit copy. Done.
+Works well for things like extracting a phone number from a wall of text: share to Scrib, tap the number, copy.
 
 ## Features
 
