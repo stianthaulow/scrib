@@ -12,6 +12,9 @@ Typical use: you copy a message containing a phone number. Share it to Scrib, ta
 - **Cursor navigation** — move left, right, up, down via bottom bar buttons
 - **Persistent** — note and full undo history survive app restarts
 
+
+<img src="docs/mockup-with-keyboard.png" alt="Scrib app screenshot" width="300" style="margin-top: 20px">
+
 ## Requirements
 
 Android 7.0 (API 24) or higher.
