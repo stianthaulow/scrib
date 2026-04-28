@@ -1,0 +1,1 @@
+A simple text workspace to edit text before pasting somewhere else.
