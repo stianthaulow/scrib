@@ -34,6 +34,11 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  dependenciesInfo {
+    includeInApk = false
+    includeInBundle = false
+  }
+
   signingConfigs {
     create("release") {
       storeFile = file("scrib-upload.jks")
