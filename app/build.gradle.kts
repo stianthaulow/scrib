@@ -6,10 +6,11 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
-val localProps = Properties().apply {
-  val f = rootProject.file("local.properties")
-  if (f.exists()) load(f.inputStream())
-}
+val localProps =
+  Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+  }
 
 val signingPassword =
   System.getenv("SIGNING_PASSWORD") ?: localProps["signing.password"] as String? ?: ""
