@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Scrib is a lightweight text workspace for Android. Share text from any app, trim it to exactly what you need, copy it out.">
+  <title>Scrib · text workspace for Android</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --border: rgba(255, 255, 255, 0.07);
+      --text: #e8ecf4;
+      --muted: rgba(201, 201, 201, 0.5);
+      --glow: rgba(220, 225, 240, 0.15);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    body {
+      min-height: 100%;
+      background: radial-gradient(ellipse at 30% 50%, #232428 0%, #0e0f17 60%);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* MAIN */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: calc(100vh - 60px);
+    }
+
+    /* CONTENT */
+    .content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px 56px 48px 64px;
+    }
+
+    .logo {
+      display: flex;
+      margin-bottom: 12px;
+      gap: 16px;
+      align-items: center;
+      animation: fade-up 0.5s ease both;
+    }
+
+    .tagline {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: clamp(22px, 2.2vw, 32px);
+      font-weight: 400;
+      color: rgba(201, 201, 201, 0.75);
+      letter-spacing: -0.01em;
+      margin-bottom: 28px;
+      animation: fade-up 0.5s 0.07s ease both;
+    }
+
+
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(34px, 3.5vw, 52px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      font-style: italic;
+      color: #8b94a6;
+    }
+
+
+    .lead {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 400px;
+      margin-bottom: 32px;
+      animation: fade-up 0.5s 0.14s ease both;
+    }
+
+    /* FEATURES */
+    .feats {
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 36px;
+      animation: fade-up 0.5s 0.28s ease both;
+    }
+
+    .feat {
+      padding: 12px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .feat:last-child {
+      grid-column: span 2;
+    }
+
+    .feat>i {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--muted);
+    }
+
+    .feat strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin-bottom: 3px;
+    }
+
+    .feat span {
+      font-size: 14.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* VISUAL */
+    .visual {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--border);
+      animation: fade-in 0.8s 0.1s ease both;
+    }
+
+    .visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    }
+
+    .visual::after {
+      content: '';
+      position: absolute;
+      width: 70%;
+      padding-bottom: 70%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow) 0%, transparent 65%);
+    }
+
+    .mockup {
+      position: relative;
+      z-index: 2;
+      height: 86%;
+      width: 90%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mockup img {
+      max-height: 100%;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.9)) drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+    }
+
+    .inline-link {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-color: rgba(201, 201, 201, 0.3);
+    }
+
+    .inline-link:hover {
+      text-decoration-color: var(--muted);
+    }
+
+    footer {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--text);
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .mockup {
+        height: 74%;
+      }
+    }
+
+    /* COMPACT HEIGHT */
+    @media (max-height: 700px) {
+      main {
+        height: calc(100vh - 52px);
+      }
+
+      h1 {
+        font-size: clamp(26px, 2.8vw, 40px);
+        margin-bottom: 14px;
+      }
+
+      .lead {
+        font-size: 14px;
+        margin-bottom: 22px;
+      }
+
+      .actions {
+        margin-bottom: 26px;
+      }
+
+      .feats {
+        padding-top: 18px;
+      }
+
+      .feat {
+        padding: 7px 0;
+      }
+
+      .feat strong {
+        font-size: 14px;
+      }
+
+      .feat span {
+        font-size: 13px;
+      }
+    }
+
+    /* TABLET */
+    @media (max-width: 960px) {
+      .content {
+        padding: 40px 32px 40px 40px;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 44px);
+      }
+
+      .lead {
+        max-width: none;
+        font-size: 14.5px;
+      }
+
+      .feats {
+        gap: 4px 24px;
+      }
+
+    }
+
+    /* MOBILE */
+    @media (max-width: 680px) {
+      main {
+        height: auto;
+        min-height: calc(100vh - 56px);
+        grid-template-columns: 1fr;
+      }
+
+      .visual {
+        height: 130vw;
+        min-height: 420px;
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .mockup {
+        height: 92%;
+      }
+
+      .content {
+        justify-content: flex-start;
+        padding: 40px 28px 56px;
+      }
+
+      .lead {
+        max-width: none;
+      }
+
+      .feats {
+        grid-template-columns: 1fr;
+      }
+
+      .feat:last-child {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 440px) {
+      .content {
+        padding: 32px 20px 48px;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+
+      .actions {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <svg class="grain" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <filter id="grain-filter" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#grain-filter)" />
+  </svg>
+
+  <main>
+    <div class="content">
+
+      <div class="logo">
+        <svg width="80" height="80" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true">
+          <rect width="512" height="512" rx="112" fill="#222425" />
+          <g transform="translate(257 262) scale(0.75) translate(-257 -262)">
+            <path d="M416,72C274,72,130.88,175.88,169,214C200.54,245.54,452,193,417,296C375.39,418.45,121,501,85,423"
+              stroke="#fcfcfc" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+        </svg>
+        <h1>Scrib</h1>
+      </div>
+      <p class="tagline">Text scratchpad for Android</p>
+      <p class="lead">Paste or share text in, use the editing helpers to isolate exactly what you need, edit it and copy it back out. Free and <a href="https://github.com/stianthaulow/scrib" class="inline-link">open source</a>.</p>
+
+      <div class="feats">
+        <div class="feat">
+          <i data-lucide="share-2" width="22" height="22"></i>
+          <div><strong>share target</strong><span>any app can share text directly to Scrib via Android's share sheet</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="sparkles" width="22" height="22"></i>
+          <div><strong>smart cleaning</strong><span>strips trailing URLs and surrounding quotation marks automatically on share</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="move" width="22" height="22"></i>
+          <div><strong>cursor controls</strong><span>move left, right, up, down and select the word under the caret — no touch handles</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="clipboard-copy" width="22" height="22"></i>
+          <div><strong>clipboard actions</strong><span>append, replace from clipboard, or copy the note or current selection in one tap</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="history" width="22" height="22"></i>
+          <div><strong>persistent undo</strong><span>undo/redo history saved across restarts</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="visual">
+      <div class="mockup">
+        <img src="mockup-with-keyboard.png" alt="Scrib app showing the text editor with cursor controls and keyboard"
+          fetchpriority="high">
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <a href="https://github.com/stianthaulow/scrib">GitHub</a>
+    <span>·</span>
+    <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>
+    <span>·</span>
+    <a href="privacy-policy.html">Privacy policy</a>
+  </footer>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
