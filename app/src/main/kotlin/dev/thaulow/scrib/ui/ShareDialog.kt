@@ -7,14 +7,16 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ShareDialog(
+  title: String,
+  body: String,
   onReplace: () -> Unit,
   onAppend: () -> Unit,
   onDismiss: () -> Unit,
 ) {
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Shared text") },
-    text = { Text("Replace the note with this text, or append it to the end?") },
+    title = { Text(title) },
+    text = { Text(body) },
     confirmButton = {
       TextButton(onClick = onAppend) { Text("Append") }
     },
