@@ -48,11 +48,15 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.thaulow.scrib.data.NoteRepository
 import dev.thaulow.scrib.data.UndoStackRepository
 import dev.thaulow.scrib.ui.BottomBar
+import dev.thaulow.scrib.ui.IncomingTextDialog
 import dev.thaulow.scrib.ui.ScribTheme
-import dev.thaulow.scrib.ui.ShareDialog
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+  companion object {
+    const val EXTRA_TILE_LAUNCH = "tile_launch"
+  }
+
   private val viewModel: MainViewModel by viewModels {
     viewModelFactory {
       initializer {
@@ -70,6 +74,7 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     captureShareIntent(intent)
+    captureTileLaunch(intent)
 
     lifecycle.addObserver(
       LifecycleEventObserver { _, event ->
@@ -96,27 +101,44 @@ class MainActivity : ComponentActivity() {
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
-    captureShareIntent(intent)
+    captureShareIntent(intent, forceHandle = true)
+    captureTileLaunch(intent, forceHandle = true)
   }
 
-  private fun captureShareIntent(intent: Intent?) {
+  private fun captureTileLaunch(
+    intent: Intent?,
+    forceHandle: Boolean = false,
+  ) {
+    if (intent?.getBooleanExtra(EXTRA_TILE_LAUNCH, false) != true) return
+    intent.removeExtra(EXTRA_TILE_LAUNCH)
+    val text = readClipboardAsText(this) ?: return
+    if (text.isBlank()) return
+    val cleaned = cleanSharedText(text)
+    if (cleaned.isEmpty()) return
+    viewModel.handleSharedText(cleaned, key = "tile|${text.hashCode()}", forceHandle = forceHandle, source = TextSource.TILE)
+  }
+
+  private fun captureShareIntent(
+    intent: Intent?,
+    forceHandle: Boolean = false,
+  ) {
     if (intent == null || intent.action != Intent.ACTION_SEND) return
     val raw = intent.getStringExtra(Intent.EXTRA_TEXT)
     val key = buildShareKey(intent, raw)
     if (intent.type != "text/plain") {
-      viewModel.markShareHandled(key)
+      viewModel.markShareHandled(key, forceHandle = forceHandle)
       return
     }
     if (raw == null) {
-      viewModel.markShareHandled(key)
+      viewModel.markShareHandled(key, forceHandle = forceHandle)
       return
     }
     val text = cleanSharedText(raw)
     if (text.isEmpty()) {
-      viewModel.markShareHandled(key)
+      viewModel.markShareHandled(key, forceHandle = forceHandle)
       return
     }
-    viewModel.handleSharedText(text, key)
+    viewModel.handleSharedText(text, key, forceHandle = forceHandle)
   }
 
   private fun buildShareKey(
@@ -156,6 +178,7 @@ private fun EditorScreen(viewModel: MainViewModel) {
   val density = LocalDensity.current
   val imeVisible = WindowInsets.ime.getBottom(density) > 0
   val pendingShare = viewModel.pendingShareFlow.collectAsStateWithLifecycle().value
+  val pendingTextSource = viewModel.pendingTextSourceFlow.collectAsStateWithLifecycle().value
   var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
   LaunchedEffect(Unit) {
@@ -255,7 +278,18 @@ private fun EditorScreen(viewModel: MainViewModel) {
   }
 
   if (pendingShare != null) {
-    ShareDialog(
+    val (dialogTitle, dialogBody) =
+      when (pendingTextSource ?: TextSource.SHARE) {
+        TextSource.TILE ->
+          "Clipboard text" to
+            "You have text on the clipboard. Replace the note with it, or append it to the end?"
+        TextSource.SHARE ->
+          "Shared text" to
+            "Replace the note with this text, or append it to the end?"
+      }
+    IncomingTextDialog(
+      title = dialogTitle,
+      body = dialogBody,
       onReplace = {
         viewModel.replaceWith(pendingShare)
         viewModel.clearPendingShare()

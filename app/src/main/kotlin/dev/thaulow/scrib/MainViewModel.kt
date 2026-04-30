@@ -17,8 +17,11 @@ import dev.thaulow.scrib.data.UndoStackRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -53,6 +56,12 @@ class MainViewModel(
     private set(value) {
       savedStateHandle[PENDING_SHARE_KEY] = value
     }
+
+  val pendingTextSourceFlow: StateFlow<TextSource?> =
+    savedStateHandle
+      .getStateFlow<String?>(PENDING_TEXT_SOURCE_KEY, null)
+      .map { name -> enumValues<TextSource>().firstOrNull { it.name == name } }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   init {
     viewModelScope.launch {
@@ -100,19 +109,26 @@ class MainViewModel(
   fun handleSharedText(
     text: String,
     key: String,
+    forceHandle: Boolean = false,
+    source: TextSource = TextSource.SHARE,
   ) {
-    if (isShareHandled(key)) return
+    if (!forceHandle && isShareHandled(key)) return
     pendingShare = text
+    savedStateHandle[PENDING_TEXT_SOURCE_KEY] = source.name
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
 
-  fun markShareHandled(key: String) {
-    if (isShareHandled(key)) return
+  fun markShareHandled(
+    key: String,
+    forceHandle: Boolean = false,
+  ) {
+    if (!forceHandle && isShareHandled(key)) return
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
 
   fun clearPendingShare() {
     pendingShare = null
+    savedStateHandle[PENDING_TEXT_SOURCE_KEY] = null
   }
 
   fun clear() {
@@ -236,6 +252,7 @@ class MainViewModel(
 
   private companion object {
     const val PENDING_SHARE_KEY = "pending_share"
+    const val PENDING_TEXT_SOURCE_KEY = "pending_text_source"
     const val LAST_HANDLED_SHARE_KEY = "last_handled_share"
   }
 
