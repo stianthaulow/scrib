@@ -53,6 +53,9 @@ import dev.thaulow.scrib.ui.ShareDialog
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+  companion object {
+    const val EXTRA_TILE_LAUNCH = "tile_launch"
+  }
   private val viewModel: MainViewModel by viewModels {
     viewModelFactory {
       initializer {
@@ -70,6 +73,7 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     captureShareIntent(intent)
+    captureTileLaunch(intent)
 
     lifecycle.addObserver(
       LifecycleEventObserver { _, event ->
@@ -97,6 +101,17 @@ class MainActivity : ComponentActivity() {
     super.onNewIntent(intent)
     setIntent(intent)
     captureShareIntent(intent)
+    captureTileLaunch(intent)
+  }
+
+  private fun captureTileLaunch(intent: Intent?) {
+    if (intent?.getBooleanExtra(EXTRA_TILE_LAUNCH, false) != true) return
+    intent.removeExtra(EXTRA_TILE_LAUNCH)
+    val text = readClipboardAsText(this) ?: return
+    if (text.isBlank()) return
+    val cleaned = cleanSharedText(text)
+    if (cleaned.isEmpty()) return
+    viewModel.handleSharedText(cleaned, key = "tile|${text.hashCode()}")
   }
 
   private fun captureShareIntent(intent: Intent?) {
