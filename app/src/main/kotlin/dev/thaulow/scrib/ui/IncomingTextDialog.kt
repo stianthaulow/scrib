@@ -6,7 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 
 @Composable
-fun ShareDialog(
+fun IncomingTextDialog(
   title: String,
   body: String,
   onReplace: () -> Unit,

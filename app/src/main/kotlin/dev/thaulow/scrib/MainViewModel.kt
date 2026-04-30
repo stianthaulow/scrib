@@ -57,11 +57,11 @@ class MainViewModel(
       savedStateHandle[PENDING_SHARE_KEY] = value
     }
 
-  val pendingTextSourceFlow: StateFlow<TextSource> =
+  val pendingTextSourceFlow: StateFlow<TextSource?> =
     savedStateHandle
-      .getStateFlow(PENDING_SHARE_SOURCE_KEY, TextSource.SHARE.name)
-      .map { TextSource.valueOf(it) }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, TextSource.SHARE)
+      .getStateFlow<String?>(PENDING_TEXT_SOURCE_KEY, null)
+      .map { name -> enumValues<TextSource>().firstOrNull { it.name == name } }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   init {
     viewModelScope.launch {
@@ -109,26 +109,26 @@ class MainViewModel(
   fun handleSharedText(
     text: String,
     key: String,
-    dedup: Boolean = true,
+    forceHandle: Boolean = false,
     source: TextSource = TextSource.SHARE,
   ) {
-    if (dedup && isShareHandled(key)) return
+    if (!forceHandle && isShareHandled(key)) return
     pendingShare = text
-    savedStateHandle[PENDING_SHARE_SOURCE_KEY] = source.name
+    savedStateHandle[PENDING_TEXT_SOURCE_KEY] = source.name
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
 
   fun markShareHandled(
     key: String,
-    dedup: Boolean = true,
+    forceHandle: Boolean = false,
   ) {
-    if (dedup && isShareHandled(key)) return
+    if (!forceHandle && isShareHandled(key)) return
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
 
   fun clearPendingShare() {
     pendingShare = null
-    savedStateHandle[PENDING_SHARE_SOURCE_KEY] = TextSource.SHARE.name
+    savedStateHandle[PENDING_TEXT_SOURCE_KEY] = null
   }
 
   fun clear() {
@@ -252,7 +252,7 @@ class MainViewModel(
 
   private companion object {
     const val PENDING_SHARE_KEY = "pending_share"
-    const val PENDING_SHARE_SOURCE_KEY = "pending_share_source"
+    const val PENDING_TEXT_SOURCE_KEY = "pending_text_source"
     const val LAST_HANDLED_SHARE_KEY = "last_handled_share"
   }
 
