@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
   companion object {
     const val EXTRA_TILE_LAUNCH = "tile_launch"
   }
+
   private val viewModel: MainViewModel by viewModels {
     viewModelFactory {
       initializer {
@@ -104,7 +105,10 @@ class MainActivity : ComponentActivity() {
     captureTileLaunch(intent, dedup = false)
   }
 
-  private fun captureTileLaunch(intent: Intent?, dedup: Boolean = true) {
+  private fun captureTileLaunch(
+    intent: Intent?,
+    dedup: Boolean = true,
+  ) {
     if (intent?.getBooleanExtra(EXTRA_TILE_LAUNCH, false) != true) return
     intent.removeExtra(EXTRA_TILE_LAUNCH)
     val text = readClipboardAsText(this) ?: return
@@ -114,7 +118,10 @@ class MainActivity : ComponentActivity() {
     viewModel.handleSharedText(cleaned, key = "tile|${text.hashCode()}", dedup = dedup, source = TextSource.TILE)
   }
 
-  private fun captureShareIntent(intent: Intent?, dedup: Boolean = true) {
+  private fun captureShareIntent(
+    intent: Intent?,
+    dedup: Boolean = true,
+  ) {
     if (intent == null || intent.action != Intent.ACTION_SEND) return
     val raw = intent.getStringExtra(Intent.EXTRA_TEXT)
     val key = buildShareKey(intent, raw)
@@ -271,12 +278,15 @@ private fun EditorScreen(viewModel: MainViewModel) {
   }
 
   if (pendingShare != null) {
-    val (dialogTitle, dialogBody) = when (pendingTextSource) {
-      TextSource.TILE -> "Clipboard text" to
-        "You have text on the clipboard. Replace the note with it, or append it to the end?"
-      TextSource.SHARE -> "Shared text" to
-        "Replace the note with this text, or append it to the end?"
-    }
+    val (dialogTitle, dialogBody) =
+      when (pendingTextSource) {
+        TextSource.TILE ->
+          "Clipboard text" to
+            "You have text on the clipboard. Replace the note with it, or append it to the end?"
+        TextSource.SHARE ->
+          "Shared text" to
+            "Replace the note with this text, or append it to the end?"
+      }
     ShareDialog(
       title = dialogTitle,
       body = dialogBody,

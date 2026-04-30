@@ -58,7 +58,8 @@ class MainViewModel(
     }
 
   val pendingTextSourceFlow: StateFlow<TextSource> =
-    savedStateHandle.getStateFlow(PENDING_SHARE_SOURCE_KEY, TextSource.SHARE.name)
+    savedStateHandle
+      .getStateFlow(PENDING_SHARE_SOURCE_KEY, TextSource.SHARE.name)
       .map { TextSource.valueOf(it) }
       .stateIn(viewModelScope, SharingStarted.Eagerly, TextSource.SHARE)
 
@@ -117,7 +118,10 @@ class MainViewModel(
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
 
-  fun markShareHandled(key: String, dedup: Boolean = true) {
+  fun markShareHandled(
+    key: String,
+    dedup: Boolean = true,
+  ) {
     if (dedup && isShareHandled(key)) return
     savedStateHandle[LAST_HANDLED_SHARE_KEY] = key
   }
