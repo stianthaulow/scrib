@@ -1,0 +1,1 @@
+First release. A single scratchpad note that saves as you type, with undo/redo, clipboard actions and cursor keys. Share text to it from any app.
