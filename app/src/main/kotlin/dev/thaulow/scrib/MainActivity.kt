@@ -307,6 +307,8 @@ private fun EditorScreen(viewModel: MainViewModel) {
       onMoveRight = { viewModel.moveCursor(1) },
       onMoveUp = { textLayout?.let { viewModel.moveCursorToLine(-1, it) } },
       onMoveDown = { textLayout?.let { viewModel.moveCursorToLine(1, it) } },
+      onMoveLineUp = { viewModel.moveLine(-1) },
+      onMoveLineDown = { viewModel.moveLine(1) },
       onSelectWord = viewModel::selectCurrentWord,
       modifier =
         Modifier

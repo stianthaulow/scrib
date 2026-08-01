@@ -35,8 +35,10 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.onClick
@@ -54,6 +56,22 @@ internal val CHIP_SLIDE_OFFSET = 4.dp
 internal const val CHIP_MOVE_MS = 120
 internal val CHIP_MAX_WIDTH = 200.dp
 
+/** How far past a button's edge the finger has to travel before its promoted action takes over. */
+internal val PROMOTE_SWIPE_THRESHOLD = 24.dp
+
+internal enum class PromoteDirection { UP, DOWN }
+
+/**
+ * A second action reachable from the same button by swiping off it in [direction], rather than by
+ * spending another slot in the bar.
+ */
+internal data class PromotedAction(
+  val label: String,
+  val contentDescription: String,
+  val direction: PromoteDirection,
+  val onInvoke: () -> Unit,
+)
+
 internal data class BarButtonSpec(
   val label: String,
   val contentDescription: String,
@@ -61,6 +79,7 @@ internal data class BarButtonSpec(
   val onInvoke: () -> Unit,
   val icon: ImageVector,
   val interactionSource: MutableInteractionSource,
+  val promoted: PromotedAction? = null,
 )
 
 @Stable
@@ -131,6 +150,25 @@ internal fun computeArmedZones(
   return zones
 }
 
+/**
+ * True once [posY] has cleared [rect] by [thresholdPx] in [direction].
+ *
+ * The swipe has to leave the button *outward*, away from the bar — up from the top row, down from
+ * the bottom row — so it can never be confused with sliding sideways to a neighbouring button.
+ */
+internal fun isPromoted(
+  rect: Rect,
+  direction: PromoteDirection,
+  posY: Float,
+  thresholdPx: Float,
+): Boolean {
+  if (rect.height <= 0f) return false
+  return when (direction) {
+    PromoteDirection.UP -> posY < rect.top - thresholdPx
+    PromoteDirection.DOWN -> posY > rect.bottom + thresholdPx
+  }
+}
+
 @Composable
 internal fun BarButton(
   spec: BarButtonSpec,
@@ -159,6 +197,18 @@ internal fun BarButton(
               spec.onInvoke()
               true
             }
+            // The promoted action is only reachable by swiping, which a screen reader user
+            // cannot perform on the bar; expose it as a custom action so it stays available.
+            val promoted = spec.promoted
+            if (promoted != null) {
+              customActions =
+                listOf(
+                  CustomAccessibilityAction(promoted.contentDescription) {
+                    promoted.onInvoke()
+                    true
+                  },
+                )
+            }
           }
         }.then(rippleModifier)
         .onGloballyPositioned { coords -> bounds.reportButton(index, coords) },
@@ -181,6 +231,7 @@ internal fun BarButton(
 @Composable
 internal fun PreviewChip(
   armedIdx: Int?,
+  armedPromoted: Boolean,
   specs: List<BarButtonSpec>,
   bounds: BarBoundsState,
   modifier: Modifier = Modifier,
@@ -190,9 +241,15 @@ internal fun PreviewChip(
   var chipHeight by remember { mutableIntStateOf(0) }
   val gapPx = with(density) { CHIP_VERTICAL_GAP.roundToPx() }
 
+  // Held past disarm so the fade-out keeps the label it had rather than snapping.
   var lastIdx by remember { mutableStateOf<Int?>(null) }
-  if (armedIdx != null) lastIdx = armedIdx
+  var lastPromoted by remember { mutableStateOf(false) }
+  if (armedIdx != null) {
+    lastIdx = armedIdx
+    lastPromoted = armedPromoted
+  }
   val displayIdx = armedIdx ?: lastIdx
+  val displayPromoted = if (armedIdx != null) armedPromoted else lastPromoted
 
   val displayLabel: String
   val displayEnabled: Boolean
@@ -200,7 +257,7 @@ internal fun PreviewChip(
   if (displayIdx != null && displayIdx in specs.indices && displayIdx in bounds.tightBounds.indices) {
     val spec = specs[displayIdx]
     val rect = bounds.tightBounds[displayIdx]
-    displayLabel = spec.label
+    displayLabel = if (displayPromoted) spec.promoted?.label ?: spec.label else spec.label
     displayEnabled = spec.enabled
     displayCenterX = rect.center.x
   } else {
