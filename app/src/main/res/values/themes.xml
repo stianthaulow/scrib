@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <style name="Theme.Scrib" parent="android:Theme.Material.Light.NoActionBar" />
+  <!--
+    Base carries what differs between day and night; the -night variant only has to
+    swap the parent, since @color/window_background is itself night-aware.
+  -->
+  <style name="Theme.Scrib.Base" parent="android:Theme.Material.Light.NoActionBar">
+    <!--
+      Drawn by the starting window before Compose renders. Kept identical to the
+      Compose background so a cold launch shows no flash of a different colour.
+    -->
+    <item name="android:windowBackground">@color/window_background</item>
+  </style>
+
+  <style name="Theme.Scrib" parent="Theme.Scrib.Base" />
 </resources>

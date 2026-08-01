@@ -2,4 +2,7 @@
 <resources>
     <color name="ic_launcher_background">#222425</color>
     <color name="ic_launcher_stroke">#fcfcfc</color>
+
+    <!-- Must match ScribTheme's dark background so the launch shows no colour step. -->
+    <color name="window_background">#0f0f0f</color>
 </resources>

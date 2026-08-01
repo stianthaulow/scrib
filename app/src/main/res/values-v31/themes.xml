@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    Android 12+ draws its own splash screen instead of the plain starting window, and
+    picks its colour from this attribute. Theme.Scrib.Base still resolves per -night,
+    so this single override covers both day and night.
+  -->
+  <style name="Theme.Scrib" parent="Theme.Scrib.Base">
+    <item name="android:windowSplashScreenBackground">@color/window_background</item>
+  </style>
+</resources>
