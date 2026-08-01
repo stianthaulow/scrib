@@ -1,0 +1,3 @@
+Move a line without leaving the bar: swipe up off the Up button, or down off Down.
+The launch screen now follows dark theme instead of flashing white.
+Fixed the Quick Settings tile not picking up the clipboard on most devices.
