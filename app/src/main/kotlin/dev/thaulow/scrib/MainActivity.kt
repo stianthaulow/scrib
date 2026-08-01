@@ -57,6 +57,9 @@ class MainActivity : ComponentActivity() {
     const val EXTRA_TILE_LAUNCH = "tile_launch"
   }
 
+  private var pendingTileLaunch = false
+  private var pendingTileForceHandle = false
+
   private val viewModel: MainViewModel by viewModels {
     viewModelFactory {
       initializer {
@@ -105,17 +108,40 @@ class MainActivity : ComponentActivity() {
     captureTileLaunch(intent, forceHandle = true)
   }
 
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+    super.onWindowFocusChanged(hasFocus)
+    if (hasFocus) consumeTileLaunch()
+  }
+
+  /**
+   * Records that we were launched from the tile, but deliberately does NOT read the clipboard yet:
+   * since Android 10 the clipboard is only readable while the window holds focus, and neither
+   * onCreate nor onNewIntent is guaranteed to run focused (the QS shade still owns focus while it
+   * collapses). Reading here returns null on most devices. The actual read happens in
+   * [consumeTileLaunch], once focus arrives.
+   */
   private fun captureTileLaunch(
     intent: Intent?,
     forceHandle: Boolean = false,
   ) {
     if (intent?.getBooleanExtra(EXTRA_TILE_LAUNCH, false) != true) return
-    intent.removeExtra(EXTRA_TILE_LAUNCH)
-    val text = readClipboardAsText(this) ?: return
-    if (text.isBlank()) return
-    val cleaned = cleanSharedText(text)
-    if (cleaned.isEmpty()) return
-    viewModel.handleSharedText(cleaned, key = "tile|${text.hashCode()}", forceHandle = forceHandle, source = TextSource.TILE)
+    pendingTileLaunch = true
+    pendingTileForceHandle = forceHandle
+    // Already focused (e.g. re-launch while resumed) means no focus change is coming.
+    if (hasWindowFocus()) consumeTileLaunch()
+  }
+
+  private fun consumeTileLaunch() {
+    if (!pendingTileLaunch) return
+    pendingTileLaunch = false
+    val forceHandle = pendingTileForceHandle
+    pendingTileForceHandle = false
+    // Drop the extra only once consumed, so a config change before focus re-arms it instead of
+    // silently swallowing the prompt.
+    intent?.removeExtra(EXTRA_TILE_LAUNCH)
+    val raw = readClipboardAsText(this) ?: return
+    val text = tileClipboardText(raw) ?: return
+    viewModel.handleSharedText(text, key = tileLaunchKey(raw), forceHandle = forceHandle, source = TextSource.TILE)
   }
 
   private fun captureShareIntent(
@@ -150,7 +176,19 @@ class MainActivity : ComponentActivity() {
 private val TRAILING_URL = Regex("\\s*https?://\\S+\\s*$")
 private val QUOTE_PAIRS = listOf('"' to '"', '\u201C' to '\u201D', '\u00AB' to '\u00BB')
 
-private fun cleanSharedText(text: String): String = stripSurroundingQuotes(stripTrailingUrl(text)).trim()
+internal fun cleanSharedText(text: String): String = stripSurroundingQuotes(stripTrailingUrl(text)).trim()
+
+/**
+ * The cleaned clipboard text worth prompting about, or null when there is nothing to offer
+ * (no clip, blank clip, or a clip that cleans down to nothing).
+ */
+internal fun tileClipboardText(raw: String?): String? {
+  if (raw.isNullOrBlank()) return null
+  return cleanSharedText(raw).ifEmpty { null }
+}
+
+/** Dedup key for a tile launch, derived from the raw clip so cleaning cannot collapse two clips into one. */
+internal fun tileLaunchKey(raw: String): String = "tile|${raw.hashCode()}"
 
 private fun stripTrailingUrl(text: String): String {
   val trimmed = text.trimEnd()
