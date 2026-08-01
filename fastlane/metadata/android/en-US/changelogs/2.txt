@@ -1,0 +1,2 @@
+Quick Settings tile that sends clipboard text straight to the note.
+Hold a button in the bar to preview what it does before letting go.
