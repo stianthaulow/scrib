@@ -108,6 +108,43 @@
       animation: fade-up 0.5s 0.14s ease both;
     }
 
+    /* ACTIONS */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      animation: fade-up 0.5s 0.21s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 14.5px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .btn.secondary {
+      background: none;
+      color: var(--muted);
+    }
+
+    .btn.secondary:hover {
+      color: var(--text);
+    }
+
     /* FEATURES */
     .feats {
       border-top: 1px solid var(--border);
@@ -125,7 +162,8 @@
       gap: 14px;
     }
 
-    .feat:last-child {
+    /* Odd count leaves a hole in the last row; let the straggler fill it. */
+    .feat:last-child:nth-child(odd) {
       grid-column: span 2;
     }
 
@@ -351,7 +389,7 @@
         grid-template-columns: 1fr;
       }
 
-      .feat:last-child {
+      .feat:last-child:nth-child(odd) {
         grid-column: span 1;
       }
     }
@@ -398,6 +436,15 @@
       <p class="tagline">Text scratchpad for Android</p>
       <p class="lead">Paste or share text in, use the editing helpers to isolate exactly what you need, edit it and copy it back out. Free and <a href="https://github.com/stianthaulow/scrib" class="inline-link">open source</a>.</p>
 
+      <div class="actions">
+        <a class="btn" href="https://f-droid.org/packages/dev.thaulow.scrib/">
+          <i data-lucide="download" width="18" height="18"></i>Get it on F-Droid
+        </a>
+        <a class="btn secondary" href="https://github.com/stianthaulow/scrib/releases/latest">
+          <i data-lucide="package" width="18" height="18"></i>APK
+        </a>
+      </div>
+
       <div class="feats">
         <div class="feat">
           <i data-lucide="share-2" width="22" height="22"></i>
@@ -418,6 +465,18 @@
         <div class="feat">
           <i data-lucide="history" width="22" height="22"></i>
           <div><strong>persistent undo</strong><span>undo/redo history saved across restarts</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="layout-grid" width="22" height="22"></i>
+          <div><strong>quick settings tile</strong><span>drop clipboard text into the note straight from the shade</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="eye" width="22" height="22"></i>
+          <div><strong>button previews</strong><span>hold a button to see what it does before you let go</span></div>
+        </div>
+        <div class="feat">
+          <i data-lucide="arrow-up-down" width="22" height="22"></i>
+          <div><strong>move lines</strong><span>swipe up off Up, or down off Down, to shift a line</span></div>
         </div>
       </div>
     </div>
