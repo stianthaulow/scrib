@@ -6,8 +6,8 @@
   -->
   <style name="Theme.Scrib.Base" parent="android:Theme.Material.Light.NoActionBar">
     <!--
-      Drawn by the starting window before Compose renders. Kept identical to the
-      Compose background so a cold launch shows no flash of a different colour.
+      Drawn by the starting window before Compose renders. ScribTheme reads the same
+      colour, so a cold launch shows no flash of a different colour.
     -->
     <item name="android:windowBackground">@color/window_background</item>
   </style>

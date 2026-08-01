@@ -3,6 +3,6 @@
     <color name="ic_launcher_background">#faf5eb</color>
     <color name="ic_launcher_stroke">#121314</color>
 
-    <!-- Must match ScribTheme's light background so the launch shows no colour step. -->
+    <!-- Single source of truth for the launch window and ScribTheme's Compose background. -->
     <color name="window_background">#fafafa</color>
 </resources>
