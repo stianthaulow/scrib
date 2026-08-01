@@ -66,6 +66,8 @@ fun BottomBar(
   onMoveRight: () -> Unit,
   onMoveUp: () -> Unit,
   onMoveDown: () -> Unit,
+  onMoveLineUp: () -> Unit,
+  onMoveLineDown: () -> Unit,
   onSelectWord: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -116,6 +118,13 @@ fun BottomBar(
         onInvoke = onMoveUp,
         icon = Icons.Filled.KeyboardArrowUp,
         interactionSource = interactionSources[4],
+        promoted =
+          PromotedAction(
+            label = "Move line up",
+            contentDescription = "Move line up",
+            direction = PromoteDirection.UP,
+            onInvoke = onMoveLineUp,
+          ),
       ),
       BarButtonSpec(
         label = if (imeVisible) "Hide keyboard" else "Show keyboard",
@@ -164,6 +173,13 @@ fun BottomBar(
         onInvoke = onMoveDown,
         icon = Icons.Filled.KeyboardArrowDown,
         interactionSource = interactionSources[10],
+        promoted =
+          PromotedAction(
+            label = "Move line down",
+            contentDescription = "Move line down",
+            direction = PromoteDirection.DOWN,
+            onInvoke = onMoveLineDown,
+          ),
       ),
       BarButtonSpec(
         label = "Right",
@@ -177,6 +193,7 @@ fun BottomBar(
 
   val specsRef by rememberUpdatedState(specs)
   var armedIdx by remember { mutableStateOf<Int?>(null) }
+  var armedPromoted by remember { mutableStateOf(false) }
 
   Box(modifier = modifier.fillMaxWidth()) {
     Column(
@@ -200,9 +217,26 @@ fun BottomBar(
               }
 
               var current: Int? = null
+              // Last button actually under the finger; survives the finger leaving the bar so we
+              // still know which button a swipe-off is promoting.
+              var anchor: Int? = null
+              var promoted = false
+              val promoteThresholdPx = PROMOTE_SWIPE_THRESHOLD.toPx()
               val pressByIdx = HashMap<Int, CompletableDeferred<Boolean>>()
               var chipShown = false
               var pendingShow: Job? = null
+
+              fun promotionAt(
+                idx: Int?,
+                pos: Offset,
+              ): Boolean {
+                if (idx == null) return false
+                val spec = specsRef[idx]
+                if (!spec.enabled) return false
+                val action = spec.promoted ?: return false
+                val rect = bounds.tightBounds.getOrNull(idx) ?: return false
+                return isPromoted(rect, action.direction, pos.y, promoteThresholdPx)
+              }
 
               fun startPress(idx: Int?) {
                 if (idx == null) return
@@ -232,12 +266,14 @@ fun BottomBar(
               try {
                 val initial = hitTest(down.position)
                 current = initial
+                anchor = initial
                 startPress(initial)
                 pendingShow =
                   scope.launch {
                     delay(CHIP_SHOW_DELAY_MS)
                     chipShown = true
                     armedIdx = current
+                    armedPromoted = promoted
                   }
 
                 while (true) {
@@ -247,7 +283,8 @@ fun BottomBar(
                   if (change.changedToUp()) {
                     val final = current
                     if (final != null && specsRef[final].enabled) {
-                      specsRef[final].onInvoke()
+                      val action = if (promoted) specsRef[final].promoted else null
+                      if (action != null) action.onInvoke() else specsRef[final].onInvoke()
                     }
                     endPress(current, cancel = false)
                     current = null
@@ -257,12 +294,28 @@ fun BottomBar(
                   if (change.isConsumed) {
                     return@awaitEachGesture
                   }
-                  val next = hitTest(change.position)
+                  val hit = hitTest(change.position)
+                  if (hit != null) anchor = hit
+                  // Only a finger that has left every zone can be swiping off the bar.
+                  val nextPromoted = hit == null && promotionAt(anchor, change.position)
+                  val next = if (nextPromoted) anchor else hit
                   if (next != current) {
                     endPress(current, cancel = false)
                     current = next
                     startPress(next)
-                    if (chipShown) armedIdx = next
+                  }
+                  if (nextPromoted != promoted) {
+                    promoted = nextPromoted
+                    // The chip is the only signal that the button changed meaning, so show it
+                    // straight away rather than waiting out the hold delay.
+                    if (nextPromoted) {
+                      pendingShow.cancel()
+                      chipShown = true
+                    }
+                  }
+                  if (chipShown) {
+                    armedIdx = current
+                    armedPromoted = promoted
                   }
                 }
               } finally {
@@ -270,6 +323,7 @@ fun BottomBar(
                 endPress(current, cancel = true)
                 armedIdx = null
                 chipShown = false
+                promoted = false
               }
             }
           },
@@ -297,6 +351,7 @@ fun BottomBar(
 
     PreviewChip(
       armedIdx = armedIdx,
+      armedPromoted = armedPromoted,
       specs = specs,
       bounds = bounds,
       modifier = Modifier.align(Alignment.TopStart),

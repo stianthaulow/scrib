@@ -191,6 +191,11 @@ class MainViewModel(
     onValueChange(value.copy(selection = TextRange(newPos)))
   }
 
+  fun moveLine(delta: Int) {
+    val moved = moveLines(value.text, value.selection, delta) ?: return
+    setValueAndPush(moved)
+  }
+
   fun selectCurrentWord() {
     val text = value.text
     if (text.isEmpty()) return
@@ -264,4 +269,51 @@ class MainViewModel(
     val end = cursorEnd.coerceIn(0, len)
     return TextFieldValue(text, TextRange(start, end))
   }
+}
+
+/**
+ * Swaps the logical line(s) covered by [selection] with the neighbouring line, [delta] being -1
+ * for up and +1 for down. Returns null when there is no such neighbour, i.e. the block already
+ * sits at that end of the text.
+ *
+ * Deliberately works on logical `\n` lines rather than the visual, wrap-aware lines that
+ * [MainViewModel.moveCursorToLine] steps through: half of a wrapped paragraph is not something
+ * you can reorder. The selection travels with the text so the action can be repeated to carry a
+ * line several positions.
+ */
+internal fun moveLines(
+  text: String,
+  selection: TextRange,
+  delta: Int,
+): TextFieldValue? {
+  if (delta != -1 && delta != 1) return null
+
+  val blockStart = text.lastIndexOf('\n', selection.min - 1) + 1
+  val newlineAfter = text.indexOf('\n', selection.max)
+  val blockEnd = if (newlineAfter == -1) text.length else newlineAfter
+  val block = text.substring(blockStart, blockEnd)
+
+  val moved: String
+  val shift: Int
+  if (delta < 0) {
+    if (blockStart == 0) return null
+    // -2 skips the newline that terminates the previous line; a negative index yields -1, which
+    // correctly puts prevStart at 0 when the previous line is the first one.
+    val prevStart = text.lastIndexOf('\n', blockStart - 2) + 1
+    val prevLine = text.substring(prevStart, blockStart - 1)
+    moved = text.substring(0, prevStart) + block + "\n" + prevLine + text.substring(blockEnd)
+    shift = -(blockStart - prevStart)
+  } else {
+    if (blockEnd == text.length) return null
+    val newlineAfterNext = text.indexOf('\n', blockEnd + 1)
+    val nextEnd = if (newlineAfterNext == -1) text.length else newlineAfterNext
+    val nextLine = text.substring(blockEnd + 1, nextEnd)
+    moved = text.substring(0, blockStart) + nextLine + "\n" + block + text.substring(nextEnd)
+    shift = nextEnd - blockEnd
+  }
+
+  // Reordering only permutes the text, so the shifted selection always stays in range.
+  val start = (selection.start + shift).coerceIn(0, moved.length)
+  val end = (selection.end + shift).coerceIn(0, moved.length)
+  return TextFieldValue(moved, TextRange(start, end))
 }
