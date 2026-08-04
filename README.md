@@ -6,7 +6,7 @@ Works well for things like extracting a phone number from a wall of text: share 
 
 ## Features
 
-- **Share target**: receive text directly from any app, trailing URLs stripped automatically
+- **Share target**: receive text directly from any app, trailing URLs and surrounding quotation marks stripped automatically
 - **Clipboard actions**: append or replace note content from clipboard; copy selection or full text in one tap
 - **Word selection**: select the word at the cursor in one tap
 - **Cursor navigation**: move left, right, up, down via bottom bar buttons
